@@ -5,7 +5,7 @@ project(HelloCuda VERSION 1.0 LANGUAGES CXX CUDA)
 set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda-11.8)                               # cuda安装路径
 
 # 设置cuda编译选项
-# set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)          # 显式的指定cuda编译器
+set(CMAKE_CUDA_COMPILER ${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc)          # 显式的指定cuda编译器
 set(CMAKE_CUDA_ARCHITECTURES OFF)                                   # 让CMake和nvcc自动检测当前可用的GPU架构
 
 # 设置项目文件路径
@@ -16,7 +16,7 @@ set(HEAD_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include)                          # �
 set(TEST1 MultiMatrix)
 
 # 设置项目依赖
-include_directories(${HEAD_PATH})        # 链接外部头文件
+include_directories(${CUDA_TOOLKIT_ROOT_DIR}/include)        # 链接cuda头文件
 
 # 设置CUDA编译
 if (CMAKE_CUDA_COMPILER)
