@@ -118,5 +118,43 @@ int y = blockDim.y * blockIdx.y + threadIdx.y;     // 矩阵的行位置
 int x = blockDim.x * blockIdx.x + threadIdx.x;     // 矩阵的列位置
 ...
 ```
+### 利用shared memory进行矩阵乘优化
 
+每次求取结果矩阵每一行或者每一列的数据，都要读取A或B矩阵的某一行和某一列读取多次，造成内存多次读取。
 
+因此可以考虑的优化点是，将这些数据从gloabl memory放到shared memeory中，读取的时候可以直接从shared memory读取到寄存器
+
+具体来说， 将一个block中的数据，将需要共用的数据加载到shared memory，为了防止shared memory大小溢出，还需要考虑分块
+
+```cpp
+                        b00 b01 b02 b03
+                        b10 b11 b12 b13
+                        b20 b21 b22 b23
+                        b30 b31 b32 b33
+
+a00 a01 a02 a03         c00 c01 c02 c03
+a10 a11 a12 a13         c10 c11 c12 c13     block(1, 0) -> shared memory
+a20 a21 a22 a23         c20 c21 c22 c23     c20 c21
+a30 a31 a32 a33         c30 c31 c32 c33     c30 c31
+
+                             b00 b01->  sub_b_step_0
+                             b10 b11
+
+                             b20 b21->  sub_b_step_1
+                             b30 b31
+sub_a_step_0 sub_a_step_1    sub_c
+a20 a21      a22 a23         c20 c21
+a30 a31      a32 a33         c30 c31
+
+sub_c = sub_a_step_0 * sub_b_step_0 + sub_a_step_1 * sub_b_step_1;
+```
+
+实际操作中，可以考虑的进行如下操作
+
+```cpp
+for(int step =0; step < N/block_size; step++ )
+     load sub_a_step to shared memory;
+     load sub_b_step to shared memory;
+     tmp += sub_a_step_on_sharedmemory * sub_b_step_on_sharedmemory;
+sub_c = tmp;
+```
